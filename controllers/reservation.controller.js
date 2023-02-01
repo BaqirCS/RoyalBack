@@ -73,16 +73,21 @@ const getReservationsByMonth = async (req, res, next) => {
 // @des  => POST method + private Access
 const createReserve = async (req, res, next) => {
   try {
-    const { requestName, date } = req.body;
+    const { requestName, date, time } = req.body;
     if (requestName) {
       req.body.requestName = requestName.trim();
     }
     if (date) {
       req.body.date = date.trim();
     }
+    if (time) {
+      req.body.time = time.trim();
+    }
     const exist = await Reserve.findOne({ date });
     if (exist) {
-      throw new CustomError('این تاریخ قبلا رزرو شده است', 400);
+      if (exist.time === req.body.time) {
+        throw new CustomError('این تاریخ قبلا رزرو شده است', 400);
+      }
     }
     const reserve = await Reserve.create(req.body);
     res.status(200).json(reserve);
@@ -110,7 +115,9 @@ const updateReserve = async (req, res, next) => {
     if (reserve.date !== req.body.date) {
       const exist = await Reserve.findOne({ date: req.body.date });
       if (exist) {
-        throw new CustomError('این تاریخ قبلا رزرو شده است', 400);
+        if (req.body.time.trim === reserve.time) {
+          throw new CustomError('این تاریخ قبلا رزرو شده است', 400);
+        }
       }
     }
     const updatedReserve = await Reserve.findByIdAndUpdate(
